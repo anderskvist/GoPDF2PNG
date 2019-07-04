@@ -39,7 +39,7 @@ func uploadFile(w http.ResponseWriter, r *http.Request) {
 	}
 	defer tempFile.Close()
 
-	outputFile, err := ioutil.TempFile("/tmp/", "output-*")
+	outputFile, err := ioutil.TempFile("/tmp/", "output-*.png")
 	if err != nil {
 		log.Error(err)
 		return
