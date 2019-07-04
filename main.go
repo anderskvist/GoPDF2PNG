@@ -135,7 +135,7 @@ func ConvertPdfToJpg(pdfName string, imageName string) error {
 	mw.SetIteratorIndex(0)
 
 	// Convert into JPG
-	if err := mw.SetFormat("jpg"); err != nil {
+	if err := mw.SetFormat("png"); err != nil {
 		return err
 	}
 
