@@ -27,6 +27,7 @@ func uploadFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer file.Close()
+
 	log.Debugf("Uploaded File: %+v\n", handler.Filename)
 	log.Debugf("File Size: %+v\n", handler.Size)
 	log.Debugf("MIME Header: %+v\n", handler.Header)
@@ -59,6 +60,7 @@ func uploadFile(w http.ResponseWriter, r *http.Request) {
 	} else {
 		if err := ConvertPdfToJpg(tempFile.Name(), outputFile.Name()); err != nil {
 			log.Fatal(err)
+			return
 		}
 
 		downloadBytes, err := ioutil.ReadFile(outputFile.Name())
@@ -79,10 +81,10 @@ func uploadFile(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Control", "private, no-transform, no-store, must-revalidate")
 
 		http.ServeContent(w, r, outputFile.Name(), time.Now(), bytes.NewReader(downloadBytes))
-	}
 
-	//Everything went well, so we redirect to frontpage
-	http.Redirect(w, r, "/", 301)
+		//Everything went well, so we redirect to frontpage
+		http.Redirect(w, r, "/", 301)
+	}
 }
 
 func main() {
