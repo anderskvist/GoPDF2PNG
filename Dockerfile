@@ -7,6 +7,9 @@ LABEL maintainer="Anders Kvist <anderskvist@gmail.com>"
 # Build dependencies
 RUN apt-get update && apt-get install libmagic-dev libmagickwand-dev -y
 
+# Access webserver
+EXPOSE 80
+
 # Set the Current Working Directory inside the container
 WORKDIR $GOPATH/src/github.com/anderskvist/GoPDF2PNG
 
