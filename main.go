@@ -88,18 +88,11 @@ func uploadFile(w http.ResponseWriter, r *http.Request) {
 func main() {
 	log.Infof("GoPDF2PNG version: %s.\n", version.Version)
 
-	pdfName := "test.pdf"
-	imageName := "test.jpg"
-
 	fs := http.FileServer(http.Dir("html"))
 	http.Handle("/", fs)
 
 	http.HandleFunc("/upload", uploadFile)
 	log.Fatal(http.ListenAndServe(":80", nil))
-
-	if err := ConvertPdfToJpg(pdfName, imageName); err != nil {
-		log.Fatal(err)
-	}
 }
 
 // ConvertPdfToJpg will take a filename of a pdf file and convert the file into an
