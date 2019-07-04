@@ -2,9 +2,9 @@ package main
 
 import (
 	"bytes"
-	"fmt"
 	"io/ioutil"
 	"net/http"
+	"path"
 	"strconv"
 	"time"
 
@@ -17,13 +17,9 @@ import (
 func uploadFile(w http.ResponseWriter, r *http.Request) {
 	log.Info("File Upload Endpoint Hit")
 
-	// Parse our multipart form, 10 << 20 specifies a maximum
-	// upload of 10 MB files.
+	// Parse our multipart form, 10 << 20 specifies a maximum upload of 10 MB files.
 	r.ParseMultipartForm(10 << 20)
 
-	// FormFile returns the first file for the given key `myFile`
-	// it also returns the FileHeader so we can get the Filename,
-	// the Header and the size of the file
 	file, handler, err := r.FormFile("PDF")
 	if err != nil {
 		log.Error("Error Retrieving the File")
@@ -35,57 +31,58 @@ func uploadFile(w http.ResponseWriter, r *http.Request) {
 	log.Debugf("File Size: %+v\n", handler.Size)
 	log.Debugf("MIME Header: %+v\n", handler.Header)
 
-	// Create a temporary file within our temp-images directory that follows
-	// a particular naming pattern
 	tempFile, err := ioutil.TempFile("/tmp/", "upload-*")
 	if err != nil {
 		log.Error(err)
+		return
 	}
 	defer tempFile.Close()
 
-	// read all of the contents of our uploaded file into a
-	// byte array
+	outputFile, err := ioutil.TempFile("/tmp/", "output-*")
+	if err != nil {
+		log.Error(err)
+		return
+	}
+	defer outputFile.Close()
+
 	fileBytes, err := ioutil.ReadAll(file)
 	if err != nil {
 		log.Error(err)
+		return
 	}
 
 	// write this byte array to our temporary file
 	_, err = tempFile.Write(fileBytes)
 	if err != nil {
 		log.Error(err)
+		return
 	} else {
-		if err := ConvertPdfToJpg(tempFile.Name(), "/tmp/testing.png"); err != nil {
+		if err := ConvertPdfToJpg(tempFile.Name(), outputFile.Name()); err != nil {
 			log.Fatal(err)
 		}
 
-		downloadBytes, err := ioutil.ReadFile("/tmp/testing.png")
+		downloadBytes, err := ioutil.ReadFile(outputFile.Name())
 
 		if err != nil {
-			fmt.Println(err)
+			log.Error(err)
+			return
 		}
 
-		// set the default MIME type to send
 		mime := http.DetectContentType(downloadBytes)
-
 		fileSize := len(string(downloadBytes))
 
 		w.Header().Set("Content-Type", mime)
-		w.Header().Set("Content-Disposition", "attachment; filename=pdf.png")
+		w.Header().Set("Content-Disposition", "attachment; filename="+path.Base(outputFile.Name())+"")
 		w.Header().Set("Expires", "0")
 		w.Header().Set("Content-Transfer-Encoding", "binary")
 		w.Header().Set("Content-Length", strconv.Itoa(fileSize))
 		w.Header().Set("Content-Control", "private, no-transform, no-store, must-revalidate")
 
-		// force it down the client's.....
-		http.ServeContent(w, r, "/tmp/testing.png", time.Now(), bytes.NewReader(downloadBytes))
-
+		http.ServeContent(w, r, outputFile.Name(), time.Now(), bytes.NewReader(downloadBytes))
 	}
 
-	// return that we have successfully uploaded our file!
-	fmt.Fprintf(w, "Successfully Uploaded File\n")
+	//Everything went well, so we redirect to frontpage
 	http.Redirect(w, r, "/", 301)
-
 }
 
 func main() {
