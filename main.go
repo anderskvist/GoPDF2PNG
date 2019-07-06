@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"path"
 	"strconv"
 	"time"
@@ -59,7 +60,18 @@ func uploadFile(w http.ResponseWriter, r *http.Request) {
 		return
 	} else {
 		if err := ConvertPdfToJpg(tempFile.Name(), outputFile.Name()); err != nil {
-			log.Fatal(err)
+
+			// Dirty cleanup if convert failed
+			os.Remove(tempFile.Name())
+			os.Remove(outputFile.Name())
+
+			log.Error(err)
+			return
+		}
+
+		err = os.Remove(tempFile.Name())
+		if err != nil {
+			log.Error(err)
 			return
 		}
 
@@ -81,6 +93,12 @@ func uploadFile(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Control", "private, no-transform, no-store, must-revalidate")
 
 		http.ServeContent(w, r, outputFile.Name(), time.Now(), bytes.NewReader(downloadBytes))
+
+		err = os.Remove(outputFile.Name())
+		if err != nil {
+			log.Error(err)
+			return
+		}
 
 		//Everything went well, so we redirect to frontpage
 		http.Redirect(w, r, "/", 301)
