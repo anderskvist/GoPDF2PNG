@@ -8,16 +8,11 @@
     <title>PDF2PNG</title>
   </head>
   <body>
-    <div>
-
-      <form
-        enctype="multipart/form-data"
-        action="/upload"
-        method="post"
-      >
-        <label for="file-upload" class="custom-file-upload" />
-        <input id="file-upload" type="file" name="PDF" onchange="this.form.submit()"/>
-      </form>
-    </div>
+    <form enctype="multipart/form-data" action="/upload" method="post">
+      <label id="pic1">
+        Upload PDF
+        <input type="file" name="PDF" id="fileToUpload" size="1" accept="application/pdf" onchange="this.form.submit()" />
+      </label>
+    </form>
   </body>
 </html>
