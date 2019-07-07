@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -12,8 +13,12 @@ import (
 	"gopkg.in/gographics/imagick.v2/imagick"
 
 	"github.com/anderskvist/GoHelpers/log"
-	"github.com/anderskvist/GoHelpers/version"
+	"github.com/coreos/etcd/version"
 )
+
+func versionJS(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintf(w, "window.onload = function () { document.title += \" (%s)\";}", version.Version)
+}
 
 func uploadFile(w http.ResponseWriter, r *http.Request) {
 	log.Info("File Upload Endpoint Hit")
@@ -110,7 +115,7 @@ func main() {
 
 	fs := http.FileServer(http.Dir("html"))
 	http.Handle("/", fs)
-
+	http.HandleFunc("/version.js", versionJS)
 	http.HandleFunc("/upload", uploadFile)
 	log.Fatal(http.ListenAndServe(":80", nil))
 }
